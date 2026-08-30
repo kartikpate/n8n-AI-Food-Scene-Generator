@@ -6,6 +6,8 @@ The workflow takes a food image as input, analyzes the dish, creates an AI promp
 
 ## Workflow
 
+![n8n AI Food Scene Generator Workflow](workflow.png)
+
 The automation follows these main steps:
 
 1. Receive the food image
@@ -46,52 +48,18 @@ Get Image
     |
     v
 Final Generated Scene
+```
 
 ## Example
-### Input
 
-A standalone food image is provided to the workflow.
+### Input Food Image
 
-### Output
+The workflow starts with a standalone food image.
 
-The workflow generates a new lifestyle image where the same type of food is shown in a realistic restaurant environment with a person.
+![Input Food Image](input-food.png)
 
-## Technologies Used
+### Generated Output
 
-n8n
-OpenAI
-AI image analysis
-AI prompt generation
-Fal AI API
-HTTP Request
-Image-generation APIs
-Workflow automation
+The workflow analyzes the food image, creates a detailed prompt, and generates a realistic restaurant-style scene with a person and environment.
 
-## What I Learned
-
-While building this project, I gained hands-on experience with:
-
-AI image analysis
-Prompt engineering
-Image-generation workflows
-Connecting AI models with n8n
-Working with external APIs
-Handling asynchronous image-generation jobs
-Using wait and polling logic
-Retrieving generated images automatically
-Building an end-to-end AI automation workflow
-
-## Security
-
-API keys, passwords, access tokens, and private credentials are not included in this public repository.
-
-Anyone importing the workflow will need to configure their own API credentials before running it.
-
-## Project Goal
-
-The goal of this project is to demonstrate how generative AI and workflow automation can turn a basic product or food image into more engaging lifestyle content for use in restaurants, cafés, food marketing, and social media.
-
-## Author
-
-Kartik Patel
-
+![Generated Restaurant Scene](generated-output.png)
