@@ -1,0 +1,305 @@
+{
+  "name": "Cafe and Resturant",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Resturant Image Pro",
+        "formDescription": "Get High quality UGC Images for food Photography",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Food Image ",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": "igp, png"
+            },
+            {
+              "fieldLabel": "Dish name ",
+              "placeholder": "What is the name of the dish "
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "name": "Resturant Image Pro"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.imgbb.com/1/upload?key=YOUR_IMGBB_API_KEY",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "image",
+              "inputDataFieldName": "Food_Image_"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "name": "Upload Image"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o",
+          "mode": "list",
+          "cachedResultName": "GPT-4O"
+        },
+        "text": "=Image Analysis Instructions\n\nPrimary Task: Analyze the given image to determine if it shows a product, character, or both\nOutput Format: Return analysis in YAML format only (no explanations or additional comments)\n\nFor Product Images:{{ $json.data.url }}\n- brand_name: Brand name shown or inferable from image\n- color_scheme: List each prominent color with:\n  - hex: Hex code value\n  - name: Descriptive color name\n- font_style: Font characteristics (serif/sans-serif, bold/thin, etc.)\n- visual_description: 1-2 sentences describing what's visible (exclude background)\n\nFor Character Images:\n- character_name: Character name if visible or inferable\n- color_scheme: List each prominent color with:\n  - hex: Hex code value\n  - name: Descriptive color name\n- outfit_style: Description of clothing, accessories, or notable features\n- visual_description: 1-2 sentences describing character appearance (exclude background)\n\nFor Images Containing Both: Provide both product and character descriptions using the respective fields above\n\nImportant: Return only the YAML output with no additional text\n",
+        "imageUrls": "={{ $json.data.url }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "name": "Analyze image"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Primary Objective: Create 1 image prompt following system guidelines\n\nAccuracy Requirements:\n- Depict reference image as accurately as possible\n- Ensure all text elements are reproduced precisely\n- Maintain visual fidelity to original\n\nInput Sources:\n1. User Instructions: {{ $('Resturant Image Pro').item.json['Dish name '] }}\n2. Reference Image Description: {{ $json['0'].content[0].text }}\n3. Aspect Ratio: User's preferred ratio (infer from message; default to vertical if unspecified)\n\nProcess Steps:\n1. Analyze user's prompt requirements\n2. Review reference image description thoroughly\n3. Determine appropriate aspect ratio\n4. Use Think tool to verify output before finalizing\n\nOutput: Single, comprehensive image generation prompt that accurately captures all specified elements\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Default Behavior:\nIf user instructions lack detail: Generate\nput this (food item) into the scene with the (influencer holding it in her hand)\n\nUGC Authentic Content Requirements\n\nDefault to casual UGC-style scenes unless explicitly overridden.\n\nFollow explicit user style/setting requests when provided.\n\nCore Task\n\nTake reference food item/product and place it into realistic, casual influencer scenes.\nSimulate everyday content creator captures with food held naturally in hand.\n\nMandatory UGC Style Elements\n\nNatural, candid, unpolished appearance\n\nEveryday realism with authentic, relatable settings\n\nAmateur-quality iPhone photo aesthetic\n\nSlightly imperfect framing and lighting\n\nCandid poses with genuine expressions (smile, mid-bite, casual glance)\n\nVisible imperfections: crumbs, fingerprints, messy hair, uneven skin, texture flaws\n\nReal-world environments as-is (kitchen clutter, busy café, street food stalls)\n\nFood state realism: show bites taken, condensation on drinks, grease stains, napkin crumples if natural to scene\n\nText Preservation: all visible product/packaging text must remain 100% accurate\n\nNo Fabrication: never invent extra text, claims, or numbers\n\nCamera Parameters Must Include\n\nCasual realism descriptors:\n\nunremarkable amateur iPhone photos\n\nreddit image\n\nsnapchat photo\n\ncasual iPhone selfie\n\nslightly uneven framing\n\nauthentic share\n\nslightly blurry\n\namateur quality phone photo\n\nDiversity Standards\n\nRotate gender, ethnicity, skin tone, and hair style across prompts unless user specifies otherwise.\n\nDefault age range: 18–40 years (balanced mix of younger creators and slightly older “foodie” influencers).\n\nContent Restrictions\n\nGenerate image prompts only (no dialogue/video).\n\nAvoid copyrighted character names.\n\nOutput Requirements\n\nAlways output in exact YAML object format:\n\n{\n  \"scenes\": [\n    {\n      \"image_prompt\": \"action: influencer holds food item naturally in hand near camera; candid smile, casual glance, or mid-bite\\ncharacter: diverse rotation, influencer age 18–40, mix of genders/ethnicities unless specified\\nfood_item: show food with all visible packaging text accurate, include realism like crumbs or condensation\\nsetting: casual real-world environment (kitchen clutter, café, street food stall, car dashboard)\\ncamera: amateur iPhone photo, casual selfie, uneven framing, slightly blurry\\nstyle: candid UGC look, no filters, imperfections intact\\ntext_accuracy: preserve all visible text exactly as in reference image\",\n      \"aspect_ratio_image\": \"2:3\"\n    }\n  ]\n}\n\n\nDefault to vertical 2:3 for social media.\n\nSwitch to 3:2 only if user explicitly requests horizontal format.\n\nQuality Control\n\nVerify text accuracy\n\nVerify UGC realism adherence\n\nVerify diversity and food-state realism included\n\nRemember one thing the influencer image should be an Indian image only like Indian female influencer only she can use modern western but the face category should be indian  \n\nAlso the location should be an Indian cafe or restaurant\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        624,
+        0
+      ],
+      "name": "Prompt Generator"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        208
+      ],
+      "name": "OpenAI Chat Model"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolThink",
+      "typeVersion": 1.1,
+      "position": [
+        752,
+        208
+      ],
+      "name": "Think"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://queue.fal.run/fal-ai/nano-banana-pro/edit",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.output.replace(/\\\"/g, '\\\\\\\"').replace(/\\n/g, '\\\\n') }}\",\n  \"image_urls\": [\n    \"{{ $('Upload Image').item.json.data.url }}\"\n  ]\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        976,
+        0
+      ],
+      "name": "Fal AI API"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1184,
+        0
+      ],
+      "name": "Wait"
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Fal AI API').item.json.response_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1392,
+        0
+      ],
+      "name": "Get Image",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.images[0].url }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1616,
+        -16
+      ],
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Resturant Image Pro": {
+      "main": [
+        [
+          {
+            "node": "Upload Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload Image": {
+      "main": [
+        [
+          {
+            "node": "Analyze image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze image": {
+      "main": [
+        [
+          {
+            "node": "Prompt Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Prompt Generator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Think": {
+      "ai_tool": [
+        [
+          {
+            "node": "Prompt Generator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prompt Generator": {
+      "main": [
+        [
+          {
+            "node": "Fal AI API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fal AI API": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Image": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": []
+}
